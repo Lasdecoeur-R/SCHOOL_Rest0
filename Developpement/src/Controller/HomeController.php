@@ -9,9 +9,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Pages publiques minimales (accueil projet, lien vers résa et connexion admin).
+ * Pages publiques minimales (accueil projet, lien vers résa).
  *
- * La méthode login() expose la route nommée app_login pour le firewall (phase 3).
+ * Connexion : \App\Controller\SecurityController (route app_login).
  */
 final class HomeController extends AbstractController
 {
@@ -25,11 +25,5 @@ final class HomeController extends AbstractController
     public function reserver(): Response
     {
         return $this->render('home/reserver.html.twig');
-    }
-
-    #[Route('/login', name: 'app_login')]
-    public function login(): Response
-    {
-        return $this->render('security/login.html.twig');
     }
 }

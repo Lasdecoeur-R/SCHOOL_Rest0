@@ -16,10 +16,23 @@
         <span> | </span>
         <a href="{{ path('app_reserver') }}">Réserver</a>
         <span> | </span>
-        <a href="{{ path('app_login') }}">Connexion admin</a>
+        {% if app.user %}
+            <a href="{{ path('app_admin_dashboard') }}">Admin</a>
+            <span> | </span>
+            <a href="{{ path('app_logout') }}">Déconnexion</a>
+        {% else %}
+            <a href="{{ path('app_login') }}">Connexion admin</a>
+            <span> | </span>
+            <a href="{{ path('app_register') }}">Inscription</a>
+        {% endif %}
     </nav>
     <hr>
 </header>
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        <p data-flash="{{ label }}">{{ message }}</p>
+    {% endfor %}
+{% endfor %}
 <main>
     {% block body %}{% endblock %}
 </main>

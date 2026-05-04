@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Back-office</h1>
+    <p>Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>{% if app.user.restaurantName %} ({{ app.user.restaurantName }}){% endif %}</p>
+    <p>Zone protégée <code>/admin</code> — CRUD tables, planning et réservations suivront dans les prochaines phases.</p>
+    <p><a href="{{ path('app_home') }}">← Accueil public</a></p>
+{% endblock %}

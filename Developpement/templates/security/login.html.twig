@@ -4,6 +4,27 @@
 
 {% block body %}
     <h1>Connexion restaurateur</h1>
-    <p>Le formulaire de connexion Symfony Security sera branché ici en phase 3.</p>
-    <p><a href="{{ path('app_home') }}">← Retour accueil</a></p>
+
+    {% if error %}
+        <p role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+    {% endif %}
+
+    <form method="post" action="{{ path('app_login') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+        <p>
+            <label for="username">Email</label><br>
+            <input type="email" id="username" name="_username" value="{{ last_username }}" required autofocus autocomplete="username">
+        </p>
+        <p>
+            <label for="password">Mot de passe</label><br>
+            <input type="password" id="password" name="_password" required autocomplete="current-password">
+        </p>
+        <p>
+            <button type="submit">Se connecter</button>
+        </p>
+    </form>
+
+    <p>Pas encore de compte ? <a href="{{ path('app_register') }}">Inscription</a></p>
+    <p><a href="{{ path('app_home') }}">← Accueil</a></p>
 {% endblock %}
