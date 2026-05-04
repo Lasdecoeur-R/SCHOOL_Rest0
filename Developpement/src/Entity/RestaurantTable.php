@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -19,6 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: RestaurantTableRepository::class)]
 #[ORM\Table(name: 'restaurant_table')]
 #[ORM\UniqueConstraint(name: 'uniq_restaurant_table_number', fields: ['number'])]
+#[UniqueEntity(fields: ['number'], message: 'Ce numéro de table est déjà utilisé.')]
 class RestaurantTable
 {
     #[ORM\Id]

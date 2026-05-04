@@ -19,4 +19,15 @@ class RestaurantTableRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, RestaurantTable::class);
     }
+
+    /**
+     * @return list<RestaurantTable>
+     */
+    public function findAllOrderedByNumber(): array
+    {
+        return $this->createQueryBuilder('t')
+            ->orderBy('t.number', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

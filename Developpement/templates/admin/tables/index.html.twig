@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tables — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Tables de salle</h1>
+    <p><a href="{{ path('app_admin_dashboard') }}">← Tableau de bord admin</a></p>
+    <p><a href="{{ path('app_admin_tables_new') }}">Ajouter une table</a></p>
+
+    {% if tables is empty %}
+        <p>Aucune table enregistrée.</p>
+    {% else %}
+        <table border="1" cellpadding="6">
+            <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Capacité</th>
+                <th>En service</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in tables %}
+                <tr>
+                    <td>{{ t.number }}</td>
+                    <td>{{ t.capacity }}</td>
+                    <td>{{ t.active ? 'oui' : 'non' }}</td>
+                    <td>
+                        <a href="{{ path('app_admin_tables_edit', { id: t.id }) }}">Modifier</a>
+                        {% if deletable[t.id] ?? false %}
+                            <form action="{{ path('app_admin_tables_delete', { id: t.id }) }}" method="post" style="display:inline;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_table_' ~ t.id) }}">
+                                <button type="submit">Supprimer</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

@@ -19,6 +19,8 @@
         {% if app.user %}
             <a href="{{ path('app_admin_dashboard') }}">Admin</a>
             <span> | </span>
+            <a href="{{ path('app_admin_tables_index') }}">Tables</a>
+            <span> | </span>
             <a href="{{ path('app_logout') }}">Déconnexion</a>
         {% else %}
             <a href="{{ path('app_login') }}">Connexion admin</a>
@@ -26,6 +28,14 @@
             <a href="{{ path('app_register') }}">Inscription</a>
         {% endif %}
     </nav>
+    {% if app.user %}
+        <p role="status" aria-live="polite">
+            <strong>Connecté</strong> : {{ app.user.userIdentifier }}
+            {% if app.user.restaurantName %}
+                ({{ app.user.restaurantName }})
+            {% endif %}
+        </p>
+    {% endif %}
     <hr>
 </header>
 {% for label, messages in app.flashes %}
