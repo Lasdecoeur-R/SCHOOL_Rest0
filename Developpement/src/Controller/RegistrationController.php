@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationFormType;
+use Doctrine\DBAL\Exception\ConnectionException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,7 +49,22 @@ final class RegistrationController extends AbstractController
                 }
             } else {
                 $entityManager->persist($user);
-                $entityManager->flush();
+                try {
+                    $entityManager->flush();
+                } catch (ConnectionException) {
+                    $entityManager->clear();
+                    $this->addFlash(
+                        'error',
+                        'Connexion à MySQL impossible (serveur arrêté ou DATABASE_URL incorrect). '
+                        .'Démarrez MySQL (WAMP / Laragon / XAMPP / Docker), créez la base si besoin, '
+                        .'puis vérifiez le fichier .env (ex. mysql://root:@127.0.0.1:3306/app?serverVersion=8.0.32&charset=utf8mb4).',
+                    );
+
+                    return $this->render('registration/register.html.twig', [
+                        'registrationForm' => $form,
+                    ]);
+                }
+
                 $this->addFlash('success', 'Compte créé. Vous pouvez vous connecter.');
 
                 return $this->redirectToRoute('app_login');
