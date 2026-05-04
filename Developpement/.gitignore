@@ -1,8 +1,8 @@
 ###> symfony/framework-bundle ###
-/.env
-/.env.local
-/.env.local.php
-/.env.*.local
+# Tous les fichiers .env* (secrets / config machine), sauf les modèles versionnés *.example
+/.env*
+!/.env.example
+!/.env.*.example
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
 /var/

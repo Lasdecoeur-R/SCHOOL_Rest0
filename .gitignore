@@ -1,2 +1,7 @@
 # Tout le contenu du dossier Documentation
 Documentation/
+
+# Environnement Symfony (doubles règles avec Developpement/.gitignore pour les IDE)
+Developpement/.env*
+!Developpement/.env.example
+!Developpement/.env.*.example
