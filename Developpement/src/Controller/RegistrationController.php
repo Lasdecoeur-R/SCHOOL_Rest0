@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use Doctrine\DBAL\Exception\ConnectionException;
+use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,45 +35,87 @@ final class RegistrationController extends AbstractController
         $form = $this->createForm(RegistrationFormType::class);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $user = new User();
-            $user->setEmail((string) $form->get('email')->getData());
-            $user->setRestaurantName($form->get('restaurantName')->getData() ?: null);
-            $plainPassword = (string) $form->get('plainPassword')->getData();
-            $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
-            $user->setRoles(['ROLE_RESTAURATEUR']);
+        if ($form->isSubmitted()) {
+            try {
+                if ($form->isValid()) {
+                    $user = new User();
+                    $user->setEmail((string) $form->get('email')->getData());
+                    $user->setRestaurantName($form->get('restaurantName')->getData() ?: null);
+                    $plainPassword = (string) $form->get('plainPassword')->getData();
+                    $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
+                    $user->setRoles(['ROLE_RESTAURATEUR']);
 
-            $violations = $validator->validate($user);
-            if (\count($violations) > 0) {
-                foreach ($violations as $violation) {
-                    $this->addFlash('error', $violation->getMessage());
+                    $violations = $validator->validate($user);
+                    if (\count($violations) > 0) {
+                        foreach ($violations as $violation) {
+                            $this->addFlash('error', $violation->getMessage());
+                        }
+                    } else {
+                        $entityManager->persist($user);
+                        $entityManager->flush();
+
+                        $this->addFlash('success', 'Compte créé. Vous pouvez vous connecter.');
+
+                        return $this->redirectToRoute('app_login');
+                    }
                 }
-            } else {
-                $entityManager->persist($user);
-                try {
-                    $entityManager->flush();
-                } catch (ConnectionException) {
-                    $entityManager->clear();
-                    $this->addFlash(
-                        'error',
-                        'Connexion à MySQL impossible (serveur arrêté ou DATABASE_URL incorrect). '
-                        .'Démarrez MySQL (WAMP / Laragon / XAMPP / Docker), créez la base si besoin, '
-                        .'puis vérifiez le fichier .env (ex. mysql://root:@127.0.0.1:3306/app?serverVersion=8.0.32&charset=utf8mb4).',
-                    );
-
-                    return $this->render('registration/register.html.twig', [
-                        'registrationForm' => $form,
-                    ]);
+            } catch (\Throwable $e) {
+                if (!$this->isLikelyMysqlUnreachable($e)) {
+                    throw $e;
                 }
 
-                $this->addFlash('success', 'Compte créé. Vous pouvez vous connecter.');
+                $this->addFlash(
+                    'error',
+                    'Connexion à MySQL impossible (serveur arrêté ou DATABASE_URL incorrect). '
+                    .'Démarrez MySQL (WAMP / Laragon) ou, avec Docker : dans Developpement/, exécutez « docker compose up -d ». '
+                    .'Vérifiez .env / .env.dev (voir compose.yaml pour l’URL avec Docker).',
+                );
 
-                return $this->redirectToRoute('app_login');
+                return $this->render('registration/register.html.twig', [
+                    'registrationForm' => $form,
+                ]);
             }
         }
 
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form,
         ]);
+    }
+
+    /**
+     * Détecte une erreur « connexion refusée » MySQL (2002), y compris si Doctrine expose un
+     * {@see DriverException} plutôt qu’un {@see ConnectionException} (conversion PDO / code).
+     */
+    private function isLikelyMysqlUnreachable(\Throwable $e): bool
+    {
+        $c = $e;
+        while (true) {
+            if ($c instanceof ConnectionException) {
+                return true;
+            }
+            if ($c instanceof DriverException && $this->messageIndicatesMysqlUnreachable($c->getMessage())) {
+                return true;
+            }
+            if ($c instanceof \PDOException && (2002 === (int) $c->getCode() || $this->messageIndicatesMysqlUnreachable($c->getMessage()))) {
+                return true;
+            }
+            if ($this->messageIndicatesMysqlUnreachable($c->getMessage())) {
+                return true;
+            }
+            $prev = $c->getPrevious();
+            if (!$prev instanceof \Throwable) {
+                break;
+            }
+            $c = $prev;
+        }
+
+        return false;
+    }
+
+    private function messageIndicatesMysqlUnreachable(string $message): bool
+    {
+        return str_contains($message, '[2002]')
+            || str_contains($message, 'refusée')
+            || str_contains($message, 'Connection refused');
     }
 }
