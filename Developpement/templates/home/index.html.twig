@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Accueil</h1>
+    <p>Réservation en ligne pour un restaurant (projet école). Interface volontairement brute pour les tests.</p>
+    <ul>
+        <li><a href="{{ path('app_reserver') }}">Réserver une table</a></li>
+        <li><a href="{{ path('app_login') }}">Espace restaurateur</a></li>
+    </ul>
+{% endblock %}
