@@ -20,6 +20,9 @@ use Symfony\Component\Validator\Constraints\NotBlank;
  */
 final class RegistrationFormType extends AbstractType
 {
+    /**
+     * Construit le formulaire non mappé sur {@see User} : champs explicites + contraintes Symfony Validator.
+     */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -54,6 +57,7 @@ final class RegistrationFormType extends AbstractType
             ]);
     }
 
+    /** Pas de data_class : le contrôleur construit l’entité {@see \App\Entity\User} à la main. */
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([]);

@@ -8,7 +8,9 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Phase 1 : comptes restaurateur, tables de salle, réservations (index planning).
+ * Phase 1 : schéma initial (utilisateur Symfony Security, tables physiques, réservations client).
+ *
+ * Les évolutions ultérieures (ex. occupancy_key) sont dans des migrations séparées.
  */
 final class Version20260504103000 extends AbstractMigration
 {

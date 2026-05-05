@@ -22,29 +22,37 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec cet email.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    /** Identifiant interne du compte restaurateur. */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    /** Email de connexion (unique) ; sert aussi d’identifiant pour le firewall. */
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank(message: "L'email est obligatoire.")]
     #[Assert\Email(message: "L'email n'est pas valide.")]
     private ?string $email = null;
 
     /**
+     * Rôles Symfony stockés en JSON (ex. ROLE_RESTAURATEUR) ; ROLE_USER est toujours ajouté en lecture.
+     *
      * @var list<string>
      */
     #[ORM\Column]
     private array $roles = [];
 
+    /** Mot de passe déjà hashé par Symfony (jamais en clair ici). */
     #[ORM\Column]
     #[Assert\NotBlank(message: 'Le mot de passe est obligatoire.')]
     private ?string $password = null;
 
+    /** Libellé affiché dans l’interface (optionnel à l’inscription). */
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     private ?string $restaurantName = null;
+
+    /* Accesseurs / mutateurs (fluent). */
 
     public function getId(): ?int
     {
@@ -104,6 +112,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /**
+     * Exigé par {@see UserInterface} : rien à effacer en mémoire (mot de passe déjà stocké hashé).
+     */
     public function eraseCredentials(): void
     {
     }

@@ -23,6 +23,7 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
+        // Compte de démo pour se connecter au back-office (voir README / consignes de cours).
         $admin = new User();
         $admin->setEmail('admin@resto.test');
         $admin->setRoles(['ROLE_RESTAURATEUR']);
@@ -30,6 +31,7 @@ class AppFixtures extends Fixture
         $admin->setPassword($this->passwordHasher->hashPassword($admin, 'admin123'));
         $manager->persist($admin);
 
+        // Jeu de tables variées pour tester l’algo « plus petite capacité suffisante » (SPECS §6.5).
         $tables = [
             ['number' => '1', 'capacity' => 2],
             ['number' => '2', 'capacity' => 4],
@@ -54,6 +56,7 @@ class AppFixtures extends Fixture
         $tomorrow = (new \DateTimeImmutable('tomorrow'))->setTime(0, 0);
         $slotAt = $tomorrow->setTime(12, 0);
 
+        // Réservation confirmée demain midi : le PrePersist remplit occupancy_key automatiquement.
         $sample = new Reservation();
         $sample->setRestaurantTable($tableForParty);
         $sample->setReservationDate($tomorrow);

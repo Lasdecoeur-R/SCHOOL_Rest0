@@ -9,7 +9,9 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * Réservations clients (index planning : date, slot_at, status).
+ * Accès aux réservations « client » (pas de compte utilisateur lié).
+ *
+ * Requêtes dédiées planning / dispo pourront s’ajouter ici (phase planning admin).
  *
  * @extends ServiceEntityRepository<Reservation>
  */

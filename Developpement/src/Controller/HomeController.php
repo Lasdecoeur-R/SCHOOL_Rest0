@@ -15,12 +15,14 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final class HomeController extends AbstractController
 {
+    /** Page d’accueil publique du projet (présentation / liens). */
     #[Route('/', name: 'app_home')]
     public function index(): Response
     {
         return $this->render('home/index.html.twig');
     }
 
+    /** Point d’entrée du parcours « réserver » (formulaire complet en phase 5). */
     #[Route('/reserver', name: 'app_reserver')]
     public function reserver(): Response
     {

@@ -17,6 +17,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class RestaurantTableFormType extends AbstractType
 {
+    /** Champs alignés sur l’entité {@see RestaurantTable} (édition admin). */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -33,6 +34,7 @@ final class RestaurantTableFormType extends AbstractType
             ]);
     }
 
+    /** Lie le formulaire à l’entité pour que handleRequest remplisse les propriétés. */
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([

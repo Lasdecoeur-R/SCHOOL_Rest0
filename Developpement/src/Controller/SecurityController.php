@@ -14,6 +14,10 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
  */
 final class SecurityController extends AbstractController
 {
+    /**
+     * Affiche le formulaire Symfony Security (form_login) et les erreurs d’authentification précédentes.
+     * Redirige vers l’admin si une session existe déjà.
+     */
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {

@@ -22,10 +22,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_RESTAURATEUR')]
 final class AdminRestaurantTableController extends AbstractController
 {
+    /** Liste des tables + indicateur « supprimable » (aucune réservation liée). */
     #[Route('', name: 'app_admin_tables_index', methods: ['GET'])]
     public function index(RestaurantTableRepository $restaurantTableRepository, EntityManagerInterface $entityManager): Response
     {
         $tables = $restaurantTableRepository->findAllOrderedByNumber();
+        // Tables ayant au moins une réservation (tout statut) : on évite le N+1 côté Twig.
         $busyIds = array_flip(array_map(
             static fn (mixed $id): int => (int) $id,
             $entityManager->createQueryBuilder()
@@ -37,6 +39,7 @@ final class AdminRestaurantTableController extends AbstractController
         ));
         $deletable = [];
         foreach ($tables as $t) {
+            // getId() non null : les lignes viennent du repository (déjà flushées en base).
             $deletable[$t->getId()] = !isset($busyIds[$t->getId()]);
         }
 
@@ -46,6 +49,7 @@ final class AdminRestaurantTableController extends AbstractController
         ]);
     }
 
+    /** Formulaire de création d’une {@see RestaurantTable}. */
     #[Route('/nouvelle', name: 'app_admin_tables_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -67,6 +71,7 @@ final class AdminRestaurantTableController extends AbstractController
         ]);
     }
 
+    /** Édition d’une table existante (paramconverter sur l’id). */
     #[Route('/{id}/modifier', name: 'app_admin_tables_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function edit(Request $request, RestaurantTable $table, EntityManagerInterface $entityManager): Response
     {
@@ -87,6 +92,7 @@ final class AdminRestaurantTableController extends AbstractController
         ]);
     }
 
+    /** Suppression sécurisée (POST + CSRF) ; refusée si des réservations existent encore. */
     #[Route('/{id}/supprimer', name: 'app_admin_tables_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(Request $request, RestaurantTable $table, EntityManagerInterface $entityManager): Response
     {

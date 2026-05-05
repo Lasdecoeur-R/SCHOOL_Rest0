@@ -21,6 +21,10 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 final class RegistrationController extends AbstractController
 {
+    /**
+     * Crée un {@see User} restaurateur (hash du mot de passe, rôle ROLE_RESTAURATEUR).
+     * Gère gracieusement l’indisponibilité MySQL (message orienté développeur / démo locale).
+     */
     #[Route('/register', name: 'app_register')]
     public function register(
         Request $request,
@@ -37,6 +41,7 @@ final class RegistrationController extends AbstractController
 
         if ($form->isSubmitted()) {
             try {
+                // isValid() peut lever (UniqueEntity) : tout reste dans le try pour un seul message flash d’erreur réseau.
                 if ($form->isValid()) {
                     $user = new User();
                     $user->setEmail((string) $form->get('email')->getData());
@@ -45,6 +50,7 @@ final class RegistrationController extends AbstractController
                     $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
                     $user->setRoles(['ROLE_RESTAURATEUR']);
 
+                    // Double passe validateur entité (contraintes hors formulaire si besoin).
                     $violations = $validator->validate($user);
                     if (\count($violations) > 0) {
                         foreach ($violations as $violation) {
@@ -112,6 +118,7 @@ final class RegistrationController extends AbstractController
         return false;
     }
 
+    /** Repère les messages PDO / MySQL habituels quand le serveur SQL n’écoute pas. */
     private function messageIndicatesMysqlUnreachable(string $message): bool
     {
         return str_contains($message, '[2002]')

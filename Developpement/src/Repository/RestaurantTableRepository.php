@@ -9,7 +9,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * Tables de salle (capacité, numéro, actif).
+ * Tables de salle : CRUD admin et requêtes pour le service de réservation.
  *
  * @extends ServiceEntityRepository<RestaurantTable>
  */
@@ -21,6 +21,8 @@ class RestaurantTableRepository extends ServiceEntityRepository
     }
 
     /**
+     * Liste complète triée par numéro affiché (ordre lexicographique sur la chaîne).
+     *
      * @return list<RestaurantTable>
      */
     public function findAllOrderedByNumber(): array

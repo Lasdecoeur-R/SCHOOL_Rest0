@@ -16,6 +16,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_RESTAURATEUR')]
 final class AdminDashboardController extends AbstractController
 {
+    /** Tableau de bord restaurateur : liens vers les modules (tables, planning à venir). */
     #[Route('', name: 'app_admin_dashboard')]
     public function index(): Response
     {

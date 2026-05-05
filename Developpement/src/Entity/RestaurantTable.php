@@ -23,25 +23,33 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['number'], message: 'Ce numéro de table est déjà utilisé.')]
 class RestaurantTable
 {
+    /** Clé primaire (identifiant interne, distinct du numéro affiché en salle). */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    /** Libellé métier (ex. « 12 », « Terrasse A ») ; unique dans l’établissement. */
     #[ORM\Column(length: 32)]
     #[Assert\NotBlank(message: 'Le numéro de table est obligatoire.')]
     #[Assert\Length(max: 32)]
     private ?string $number = null;
 
+    /** Nombre maximum de couverts pour ce plan de table. */
     #[ORM\Column(type: Types::SMALLINT, options: ['unsigned' => true])]
     #[Assert\Positive(message: 'La capacité doit être au moins 1.')]
     #[Assert\Range(max: 99, maxMessage: 'La capacité ne peut pas dépasser {{ max }}.')]
     private ?int $capacity = null;
 
+    /** Si false : la table n’est plus proposée par le service de réservation (sans effacer l’historique). */
     #[ORM\Column(options: ['default' => true])]
     private bool $active = true;
 
-    /** @var Collection<int, Reservation> */
+    /**
+     * Réservations liées à cette table (inverse de {@see Reservation::$restaurantTable}).
+     *
+     * @var Collection<int, Reservation>
+     */
     #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'restaurantTable', orphanRemoval: false)]
     private Collection $reservations;
 
@@ -49,6 +57,8 @@ class RestaurantTable
     {
         $this->reservations = new ArrayCollection();
     }
+
+    /* Accesseurs / mutateurs (fluent). */
 
     public function getId(): ?int
     {
@@ -99,6 +109,9 @@ class RestaurantTable
         return $this->reservations;
     }
 
+    /**
+     * Maintient la cohérence bidirectionnelle Doctrine (collection + côté propriétaire).
+     */
     public function addReservation(Reservation $reservation): static
     {
         if (!$this->reservations->contains($reservation)) {
@@ -109,6 +122,7 @@ class RestaurantTable
         return $this;
     }
 
+    /** Retire le lien sans supprimer l’entité {@see Reservation} (orphanRemoval désactivé). */
     public function removeReservation(Reservation $reservation): static
     {
         $this->reservations->removeElement($reservation);
