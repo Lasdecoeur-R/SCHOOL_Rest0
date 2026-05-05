@@ -9,9 +9,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Pages publiques minimales (accueil projet, lien vers résa).
+ * Page d’accueil publique. Le parcours « Réserver » : {@see \App\Controller\ReservationPublicController} (route app_reserver).
  *
- * Connexion : \App\Controller\SecurityController (route app_login).
+ * Connexion : {@see SecurityController} (route app_login).
  */
 final class HomeController extends AbstractController
 {
@@ -20,12 +20,5 @@ final class HomeController extends AbstractController
     public function index(): Response
     {
         return $this->render('home/index.html.twig');
-    }
-
-    /** Point d’entrée du parcours « réserver » (formulaire complet en phase 5). */
-    #[Route('/reserver', name: 'app_reserver')]
-    public function reserver(): Response
-    {
-        return $this->render('home/reserver.html.twig');
     }
 }

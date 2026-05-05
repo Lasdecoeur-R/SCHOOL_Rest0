@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Restaurant;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use Doctrine\DBAL\Exception\ConnectionException;
@@ -45,18 +46,33 @@ final class RegistrationController extends AbstractController
                 if ($form->isValid()) {
                     $user = new User();
                     $user->setEmail((string) $form->get('email')->getData());
-                    $user->setRestaurantName($form->get('restaurantName')->getData() ?: null);
+                    $establishmentLabel = trim((string) ($form->get('restaurantName')->getData() ?? ''));
+                    $displayName = '' !== $establishmentLabel ? $establishmentLabel : sprintf('Établissement (%s)', $user->getEmail());
+
+                    $restaurant = new Restaurant();
+                    $restaurant->setName($displayName);
+
+                    $user->setRestaurantName($establishmentLabel !== '' ? $establishmentLabel : null);
+                    $user->setRestaurant($restaurant);
                     $plainPassword = (string) $form->get('plainPassword')->getData();
                     $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
                     $user->setRoles(['ROLE_RESTAURATEUR']);
 
-                    // Double passe validateur entité (contraintes hors formulaire si besoin).
-                    $violations = $validator->validate($user);
-                    if (\count($violations) > 0) {
-                        foreach ($violations as $violation) {
-                            $this->addFlash('error', $violation->getMessage());
+                    // Double passe validateur entités (Restaurant + utilisateur) avant toute persistance.
+                    $violationsMessages = [];
+                    foreach ($validator->validate($restaurant) as $v) {
+                        $violationsMessages[] = $v->getMessage();
+                    }
+                    foreach ($validator->validate($user) as $v) {
+                        $violationsMessages[] = $v->getMessage();
+                    }
+
+                    if (\count($violationsMessages) > 0) {
+                        foreach ($violationsMessages as $message) {
+                            $this->addFlash('error', $message);
                         }
                     } else {
+                        /** @see User::$restaurant cascade persist pour garantir INSERT restaurant puis user.restaurant_id. */
                         $entityManager->persist($user);
                         $entityManager->flush();
 

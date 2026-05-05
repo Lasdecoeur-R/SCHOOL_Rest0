@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Reservation;
+use App\Entity\Restaurant;
 use App\Entity\RestaurantTable;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -12,7 +13,7 @@ use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Données de démo : restaurateur de test, tables de salle, une réservation exemple.
+ * Données de démo : deux établissements (liste déroulante publique), compte admin relié au principal.
  */
 class AppFixtures extends Fixture
 {
@@ -23,15 +24,22 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        // Compte de démo pour se connecter au back-office (voir README / consignes de cours).
+        $primary = new Restaurant();
+        $primary->setName('Restaurant démo');
+        $manager->persist($primary);
+
+        $secondary = new Restaurant();
+        $secondary->setName('Le Petit Zinc');
+        $manager->persist($secondary);
+
         $admin = new User();
         $admin->setEmail('admin@resto.test');
         $admin->setRoles(['ROLE_RESTAURATEUR']);
         $admin->setRestaurantName('Restaurant démo');
         $admin->setPassword($this->passwordHasher->hashPassword($admin, 'admin123'));
+        $admin->setRestaurant($primary);
         $manager->persist($admin);
 
-        // Jeu de tables variées pour tester l’algo « plus petite capacité suffisante » (SPECS §6.5).
         $tables = [
             ['number' => '1', 'capacity' => 2],
             ['number' => '2', 'capacity' => 4],
@@ -43,6 +51,7 @@ class AppFixtures extends Fixture
         $entities = [];
         foreach ($tables as $row) {
             $t = new RestaurantTable();
+            $t->setRestaurant($primary);
             $t->setNumber($row['number']);
             $t->setCapacity($row['capacity']);
             $t->setActive(true);
@@ -50,13 +59,26 @@ class AppFixtures extends Fixture
             $entities[] = $t;
         }
 
-        // Table « 4 places » : la plus petite qui convient pour 3 personnes (scénario algo §6.5)
+        // Petit établissement secondaire réservable depuis le même site public.
+        $z1 = new RestaurantTable();
+        $z1->setRestaurant($secondary);
+        $z1->setNumber('1');
+        $z1->setCapacity(2);
+        $z1->setActive(true);
+        $manager->persist($z1);
+
+        $z2 = new RestaurantTable();
+        $z2->setRestaurant($secondary);
+        $z2->setNumber('2');
+        $z2->setCapacity(6);
+        $z2->setActive(true);
+        $manager->persist($z2);
+
         $tableForParty = $entities[2];
 
         $tomorrow = (new \DateTimeImmutable('tomorrow'))->setTime(0, 0);
         $slotAt = $tomorrow->setTime(12, 0);
 
-        // Réservation confirmée demain midi : le PrePersist remplit occupancy_key automatiquement.
         $sample = new Reservation();
         $sample->setRestaurantTable($tableForParty);
         $sample->setReservationDate($tomorrow);

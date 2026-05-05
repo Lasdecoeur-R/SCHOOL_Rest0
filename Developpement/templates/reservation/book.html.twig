@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réserver — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Réservation</h1>
+    <p>Choisissez la date puis un créneau <strong>midi</strong> (11h00–13h00 inclus) ou <strong>soir</strong> (18h30–22h30 inclus). Créneaux espacés de <strong>15 minutes</strong>.</p>
+
+    {# Paramètres d’URL GET : mise à jour des créneaux sans envoyer encore la réservation. #}
+    <form method="get" action="{{ path('app_reserver') }}" aria-label="Restaurant et date pour préparer les créneaux">
+        <p>
+            <label for="booking-rest-quick">Restaurant</label><br>
+            <select id="booking-rest-quick" name="restaurant"{% if bookableRestaurants is not empty %} required{% endif %}>
+                {% for r in bookableRestaurants %}
+                    <option value="{{ r.id }}" {% if filterRestaurantDefault is defined and filterRestaurantDefault == r.id %}selected{% endif %}>{{ r.name }}</option>
+                {% else %}
+                    <option value="">— Aucun établissement inscrit pour l’instant —</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <label for="booking-date-quick">Date du repas</label><br>
+            <input id="booking-date-quick" type="date" name="date" value="{{ filterDateDefault }}" min="{{ minDateFilter }}" required>
+            <button type="submit">Afficher les créneaux disponibles</button>
+        </p>
+    </form>
+
+    {% if noticeIncompleteTableSetup is defined and noticeIncompleteTableSetup %}
+        <p><strong>Réservations indisponibles pour cet établissement pour l’instant</strong> — le restaurateur ne propose pas encore de tables pour les réservations en ligne.</p>
+    {% endif %}
+
+    {% if not hasBookableRestaurants %}
+        <p>Aucun restaurant inscrit pour le moment. Merci de revenir plus tard.</p>
+    {% elseif hasSlots %}
+        {{ form_start(form) }}
+            {{ form_row(form.reservationDate) }}
+            {{ form_row(form.slotTime) }}
+            {{ form_row(form.partySize) }}
+            {{ form_row(form.guestName) }}
+            {{ form_row(form.guestEmail) }}
+            {{ form_row(form.guestPhone) }}
+            {{ form_widget(form.submit) }}
+            {{ form_rest(form) }}
+        {{ form_end(form) }}
+    {% elseif hasBookableRestaurants %}
+        <p><strong>Aucun créneau disponible pour cette date</strong> (horaires déjà passés ou fin de journée).</p>
+        <p>Ajustez la date ou changez de restaurant puis cliquez sur « Afficher les créneaux disponibles ».</p>
+    {% endif %}
+
+    <p><a href="{{ path('app_home') }}">← Retour accueil</a></p>
+{% endblock %}

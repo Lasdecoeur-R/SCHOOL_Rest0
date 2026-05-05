@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Entity\Reservation;
+use App\Entity\Restaurant;
 use App\Entity\RestaurantTable;
 use App\Exception\NoTableAvailableException;
 use App\Service\Reservation\ReservationBookingRequest;
@@ -31,7 +32,6 @@ final class ReservationBookingServiceTest extends KernelTestCase
         self::bootKernel();
         $this->entityManager = self::getContainer()->get('doctrine')->getManager();
 
-        // Schéma aligné sur les entités (évite de dépendre des migrations pour la rapidité des tests).
         $tool = new SchemaTool($this->entityManager);
         $meta = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $tool->dropSchema($meta);
@@ -41,10 +41,11 @@ final class ReservationBookingServiceTest extends KernelTestCase
     /** §6.5 : capacité ≥ 3 → première table à 4 places ; ex æquo → numéro « A » avant « Z ». */
     public function testPicksSmallestCapacityTableWithStableTieBreak(): void
     {
-        $this->persistTable('Z', 4);
-        $this->persistTable('A', 4);
-        $this->persistTable('S', 6);
-        $this->persistTable('T', 2);
+        $r = $this->persistRestaurant('Resto suite');
+        $this->persistTable($r, 'Z', 4);
+        $this->persistTable($r, 'A', 4);
+        $this->persistTable($r, 'S', 6);
+        $this->persistTable($r, 'T', 2);
         $this->entityManager->flush();
 
         $date = new \DateTimeImmutable('2026-06-10');
@@ -52,6 +53,7 @@ final class ReservationBookingServiceTest extends KernelTestCase
         $service = self::getContainer()->get(ReservationBookingService::class);
 
         $reservation = $service->book(new ReservationBookingRequest(
+            $r,
             $date,
             $slot,
             3,
@@ -62,19 +64,22 @@ final class ReservationBookingServiceTest extends KernelTestCase
 
         self::assertSame('A', $reservation->getRestaurantTable()?->getNumber());
         self::assertSame(4, $reservation->getRestaurantTable()?->getCapacity());
+        self::assertSame($r->getId(), $reservation->getRestaurantTable()?->getRestaurant()?->getId());
         self::assertNotNull($reservation->getOccupancyKey());
     }
 
     /** Une seule réservation confirmée par (table, date, créneau) : la seconde demande est refusée. */
     public function testSecondBookingSameSlotThrows(): void
     {
-        $this->persistTable('1', 4);
+        $r = $this->persistRestaurant('Resto même créneau');
+        $this->persistTable($r, '1', 4);
         $this->entityManager->flush();
 
         $date = new \DateTimeImmutable('2026-06-11');
         $slot = $date->setTime(19, 30);
         $service = self::getContainer()->get(ReservationBookingService::class);
         $req = new ReservationBookingRequest(
+            $r,
             $date,
             $slot,
             2,
@@ -87,6 +92,7 @@ final class ReservationBookingServiceTest extends KernelTestCase
 
         $this->expectException(NoTableAvailableException::class);
         $service->book(new ReservationBookingRequest(
+            $r,
             $date,
             $slot,
             2,
@@ -99,7 +105,8 @@ final class ReservationBookingServiceTest extends KernelTestCase
     /** Les annulations ne portent pas occupancy_key : la table redevient sélectionnable. */
     public function testCancelledReservationDoesNotBlockTable(): void
     {
-        $this->persistTable('9', 4);
+        $r = $this->persistRestaurant('Resto annulation');
+        $this->persistTable($r, '9', 4);
         $this->entityManager->flush();
 
         $table = $this->entityManager->getRepository(RestaurantTable::class)->findOneBy(['number' => '9']);
@@ -124,6 +131,7 @@ final class ReservationBookingServiceTest extends KernelTestCase
 
         $service = self::getContainer()->get(ReservationBookingService::class);
         $booked = $service->book(new ReservationBookingRequest(
+            $r,
             $date,
             $slot,
             2,
@@ -138,7 +146,9 @@ final class ReservationBookingServiceTest extends KernelTestCase
     /** Table inactive : exclue du jeu de candidats → aucune table disponible pour le créneau. */
     public function testInactiveTableIsIgnored(): void
     {
+        $r = $this->persistRestaurant('Resto inactif');
         $t = new RestaurantTable();
+        $t->setRestaurant($r);
         $t->setNumber('X');
         $t->setCapacity(8);
         $t->setActive(false);
@@ -151,6 +161,7 @@ final class ReservationBookingServiceTest extends KernelTestCase
 
         $this->expectException(NoTableAvailableException::class);
         $service->book(new ReservationBookingRequest(
+            $r,
             $date,
             $slot,
             2,
@@ -160,10 +171,19 @@ final class ReservationBookingServiceTest extends KernelTestCase
         ));
     }
 
-    /** Fabrique une table active persistée (flush laissé à l’appelant pour regrouper les INSERT). */
-    private function persistTable(string $number, int $capacity): RestaurantTable
+    private function persistRestaurant(string $name): Restaurant
+    {
+        $r = new Restaurant();
+        $r->setName($name);
+        $this->entityManager->persist($r);
+
+        return $r;
+    }
+
+    private function persistTable(Restaurant $restaurant, string $number, int $capacity): RestaurantTable
     {
         $t = new RestaurantTable();
+        $t->setRestaurant($restaurant);
         $t->setNumber($number);
         $t->setCapacity($capacity);
         $t->setActive(true);

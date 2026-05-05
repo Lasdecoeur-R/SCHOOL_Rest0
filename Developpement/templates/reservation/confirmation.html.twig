@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Confirmation — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Réservation enregistrée</h1>
+    <p>Merci <strong>{{ reservation.guestName }}</strong>, votre réservation est confirmée (pas d’obligation de valider par e‑mail).</p>
+
+    <h2>Récapitulatif</h2>
+    <ul>
+        <li><strong>Restaurant</strong> : {{ reservation.restaurantTable.restaurant.name }}</li>
+        <li><strong>Date</strong> : {{ reservation.reservationDate|date('d/m/Y') }}</li>
+        <li><strong>Créneau</strong> : {{ reservation.slotAt|date('H:i') }}</li>
+        <li><strong>Personnes</strong> : {{ reservation.partySize }}</li>
+        <li><strong>Table attribuée</strong> : n<sup>o</sup> {{ reservation.restaurantTable.number }} (capacité {{ reservation.restaurantTable.capacity }})</li>
+        <li><strong>Téléphone</strong> : {{ reservation.guestPhone }}</li>
+        <li><strong>Email</strong> : {{ reservation.guestEmail }}</li>
+    </ul>
+
+    <p>Note : conservez cet écran ou vos coordonnées — éventuelle annulation côté admin (phases suivantes).</p>
+
+    <p><a href="{{ path('app_reserver') }}">Nouvelle réservation</a> — <a href="{{ path('app_home') }}">Accueil</a></p>
+{% endblock %}

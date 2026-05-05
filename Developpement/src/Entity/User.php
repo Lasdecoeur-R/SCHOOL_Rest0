@@ -47,10 +47,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: 'Le mot de passe est obligatoire.')]
     private ?string $password = null;
 
-    /** Libellé affiché dans l’interface (optionnel à l’inscription). */
+    /** Libellé affiché dans l’interface (optionnel à l’inscription ; souvent synchronisé avec {@see Restaurant::$name}). */
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     private ?string $restaurantName = null;
+
+    /** Établissement géré par ce compte (tables + planning réservés à cette entité). */
+    #[ORM\ManyToOne(inversedBy: 'staffUsers', cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Restaurant $restaurant = null;
 
     /* Accesseurs / mutateurs (fluent). */
 
@@ -127,6 +132,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRestaurantName(?string $restaurantName): static
     {
         $this->restaurantName = $restaurantName;
+
+        return $this;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): static
+    {
+        $this->restaurant = $restaurant;
 
         return $this;
     }

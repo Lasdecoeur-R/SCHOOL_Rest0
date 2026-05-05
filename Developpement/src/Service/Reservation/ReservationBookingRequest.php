@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Reservation;
 
+use App\Entity\Restaurant;
+
 /**
  * Données « brutes » passées au service de réservation (pas encore une entité {@see \App\Entity\Reservation}).
  *
@@ -12,6 +14,8 @@ namespace App\Service\Reservation;
 final readonly class ReservationBookingRequest
 {
     public function __construct(
+        /** Établissement choisi ; seules ses tables sont éligibles. */
+        public Restaurant $restaurant,
         /** Jour du repas (date seule, sans notion de fuseau métier dans la démo). */
         public \DateTimeImmutable $reservationDate,
         /** Horodatage exact du créneau réservé (doctrine : datetime_immutable). */

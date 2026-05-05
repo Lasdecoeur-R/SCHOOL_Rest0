@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Reservation;
+use App\Entity\Restaurant;
 use App\Entity\RestaurantTable;
+use App\Entity\User;
 use App\Form\RestaurantTableFormType;
 use App\Repository\RestaurantTableRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -16,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * CRUD des tables de salle (CAS_UTILISATION scénario 3 cas 1).
+ * CRUD des tables de salle pour l’établissement du restaurateur connecté.
  */
 #[Route('/admin/tables')]
 #[IsGranted('ROLE_RESTAURATEUR')]
@@ -26,8 +28,15 @@ final class AdminRestaurantTableController extends AbstractController
     #[Route('', name: 'app_admin_tables_index', methods: ['GET'])]
     public function index(RestaurantTableRepository $restaurantTableRepository, EntityManagerInterface $entityManager): Response
     {
-        $tables = $restaurantTableRepository->findAllOrderedByNumber();
-        // Tables ayant au moins une réservation (tout statut) : on évite le N+1 côté Twig.
+        $restaurant = $this->currentUserRestaurant();
+        if (null === $restaurant) {
+            $this->addFlash('error', 'Aucun établissement n’est relié à ce compte. Exécutez les migrations puis rechargez vos fixtures, ou créez votre établissement via l’inscription.');
+
+            return $this->redirectToRoute('app_admin_dashboard');
+        }
+
+        $tables = $restaurantTableRepository->findByRestaurantOrderedByNumber($restaurant);
+
         $busyIds = array_flip(array_map(
             static fn (mixed $id): int => (int) $id,
             $entityManager->createQueryBuilder()
@@ -37,15 +46,16 @@ final class AdminRestaurantTableController extends AbstractController
                 ->getQuery()
                 ->getSingleColumnResult(),
         ));
+
         $deletable = [];
         foreach ($tables as $t) {
-            // getId() non null : les lignes viennent du repository (déjà flushées en base).
             $deletable[$t->getId()] = !isset($busyIds[$t->getId()]);
         }
 
         return $this->render('admin/tables/index.html.twig', [
             'tables' => $tables,
             'deletable' => $deletable,
+            'establishmentLabel' => $restaurant->getName(),
         ]);
     }
 
@@ -53,7 +63,15 @@ final class AdminRestaurantTableController extends AbstractController
     #[Route('/nouvelle', name: 'app_admin_tables_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+        $restaurant = $this->currentUserRestaurant();
+        if (null === $restaurant) {
+            $this->addFlash('error', 'Aucun établissement n’est relié à ce compte.');
+
+            return $this->redirectToRoute('app_admin_dashboard');
+        }
+
         $table = new RestaurantTable();
+        $table->setRestaurant($restaurant);
         $form = $this->createForm(RestaurantTableFormType::class, $table);
         $form->handleRequest($request);
 
@@ -75,6 +93,8 @@ final class AdminRestaurantTableController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_admin_tables_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function edit(Request $request, RestaurantTable $table, EntityManagerInterface $entityManager): Response
     {
+        $this->assertTableOwnedByCurrentUserOrDeny($table);
+
         $form = $this->createForm(RestaurantTableFormType::class, $table);
         $form->handleRequest($request);
 
@@ -96,6 +116,8 @@ final class AdminRestaurantTableController extends AbstractController
     #[Route('/{id}/supprimer', name: 'app_admin_tables_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(Request $request, RestaurantTable $table, EntityManagerInterface $entityManager): Response
     {
+        $this->assertTableOwnedByCurrentUserOrDeny($table);
+
         if (!$this->isCsrfTokenValid('delete_table_'.$table->getId(), $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Jeton CSRF invalide.');
         }
@@ -112,5 +134,25 @@ final class AdminRestaurantTableController extends AbstractController
         $this->addFlash('success', 'Table supprimée.');
 
         return $this->redirectToRoute('app_admin_tables_index');
+    }
+
+    /** Compte relié ou null (données héritées non migrées). */
+    private function currentUserRestaurant(): ?Restaurant
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return null;
+        }
+
+        return $user->getRestaurant();
+    }
+
+    private function assertTableOwnedByCurrentUserOrDeny(RestaurantTable $table): void
+    {
+        $mine = $this->currentUserRestaurant();
+        $owner = $table->getRestaurant();
+        if (null === $mine || null === $owner || $mine->getId() !== $owner->getId()) {
+            throw $this->createAccessDeniedException('Cette table n’appartient pas à votre établissement.');
+        }
     }
 }

@@ -4,6 +4,9 @@
 
 {% block body %}
     <h1>Tables de salle</h1>
+    {% if establishmentLabel is defined %}
+        <p><strong>{{ establishmentLabel }}</strong></p>
+    {% endif %}
     <p><a href="{{ path('app_admin_dashboard') }}">← Tableau de bord admin</a></p>
     <p><a href="{{ path('app_admin_tables_new') }}">Ajouter une table</a></p>
 

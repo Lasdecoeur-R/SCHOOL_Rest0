@@ -19,8 +19,8 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity(repositoryClass: RestaurantTableRepository::class)]
 #[ORM\Table(name: 'restaurant_table')]
-#[ORM\UniqueConstraint(name: 'uniq_restaurant_table_number', fields: ['number'])]
-#[UniqueEntity(fields: ['number'], message: 'Ce numéro de table est déjà utilisé.')]
+#[ORM\UniqueConstraint(name: 'uniq_restaurant_table_place_number', fields: ['restaurant', 'number'])]
+#[UniqueEntity(fields: ['number', 'restaurant'], message: 'Ce numéro de table existe déjà pour cet établissement.')]
 class RestaurantTable
 {
     /** Clé primaire (identifiant interne, distinct du numéro affiché en salle). */
@@ -28,6 +28,12 @@ class RestaurantTable
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    /** Établissement auquel cette table physique appartient. */
+    #[ORM\ManyToOne(inversedBy: 'tables')]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Assert\NotNull(message: 'Le restaurant doit être précisé.')]
+    private ?Restaurant $restaurant = null;
 
     /** Libellé métier (ex. « 12 », « Terrasse A ») ; unique dans l’établissement. */
     #[ORM\Column(length: 32)]
@@ -63,6 +69,18 @@ class RestaurantTable
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): static
+    {
+        $this->restaurant = $restaurant;
+
+        return $this;
     }
 
     public function getNumber(): ?string
