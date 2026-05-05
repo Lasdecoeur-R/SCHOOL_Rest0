@@ -22,7 +22,15 @@ final class SecurityController extends AbstractController
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         if ($this->getUser()) {
-            return $this->redirectToRoute('app_admin_dashboard');
+            return $this->redirectToRoute(
+                $this->isGranted('ROLE_ADMIN')
+                    ? 'app_admin_dashboard'
+                    : (
+                        $this->isGranted('ROLE_RESTAURATEUR')
+                        ? 'app_restaurateur_dashboard'
+                        : 'app_home'
+                    ),
+            );
         }
 
         return $this->render('security/login.html.twig', [

@@ -1,14 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Admin — {{ parent() }}{% endblock %}
+{% block title %}Admin plateforme — {{ parent() }}{% endblock %}
 
 {% block body %}
-    <h1>Back-office</h1>
-    <p>Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>{% if app.user.restaurantName %} ({{ app.user.restaurantName }}){% endif %}</p>
-    <p>Zone protégée <code>/admin</code>.</p>
+    <h1>Administration plateforme</h1>
+    <p>Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>.</p>
+    <p>Ici vous gérez les <strong>fiches restaurants</strong> du site. Les restaurateurs connectés gèrent leurs tables dans leur espace dédié.</p>
     <ul>
-        <li><a href="{{ path('app_admin_tables_index') }}">Gérer les tables de salle</a></li>
-        <li>Planning des réservations (à venir)</li>
+        <li><a href="{{ path('app_admin_restaurants_index') }}">Établissements (liste, création, édition, suppression)</a></li>
     </ul>
     <p><a href="{{ path('app_home') }}">← Accueil public</a></p>
 {% endblock %}

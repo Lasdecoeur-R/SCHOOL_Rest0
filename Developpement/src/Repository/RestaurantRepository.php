@@ -24,6 +24,20 @@ class RestaurantRepository extends ServiceEntityRepository
     }
 
     /**
+     * Liste réservée au rôle plateforme ROLE_ADMIN : tous les enregistrements.
+     *
+     * @return list<Restaurant>
+     */
+    public function findAllOrderedByName(): array
+    {
+        return $this->createQueryBuilder('r')
+            ->orderBy('r.name', 'ASC')
+            ->addOrderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Établissements affichés sur /reserver : au moins un compte créé (relation {@see User::$restaurant}.
      *
      * @return list<Restaurant> Tri stable par nom.

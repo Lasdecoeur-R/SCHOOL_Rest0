@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon établissement — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Mon établissement</h1>
+    <p><a href="{{ path('app_restaurateur_dashboard') }}">← Espace restaurateur</a></p>
+
+    <p>Nom affiché : <strong>{{ restaurant.name }}</strong></p>
+    <p>Tables : {{ tableCount }} — Réservations liées (historique inclus) : {{ reservationCount }}</p>
+
+    {% if canDelete %}
+        <p>Si vous supprimez cet établissement, toutes vos tables sont supprimées. Votre compte restera connectable ; vous devrez rattacher ou recréer un établissement selon les règles du site.</p>
+        <form action="{{ path('app_restaurateur_establishment_delete') }}" method="post" onsubmit="return confirm('Supprimer définitivement cet établissement ?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_restaurant_establishment') }}">
+            <p><button type="submit">Supprimer mon établissement</button></p>
+        </form>
+    {% else %}
+        <p><strong>Suppression indisponible</strong> : tant qu’au moins une réservation existe sur vos tables (tous statuts), la base interdit la suppression pour conserver l’historique.</p>
+    {% endif %}
+{% endblock %}

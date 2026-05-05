@@ -4,12 +4,10 @@
 
 {% block body %}
     <h1>{{ title }}</h1>
-    <p><a href="{{ path('app_admin_tables_index') }}">← Liste des tables</a></p>
+    <p><a href="{{ path('app_admin_restaurants_index') }}">← Liste des établissements</a></p>
 
     {{ form_start(form) }}
-        {{ form_row(form.number) }}
-        {{ form_row(form.capacity) }}
-        {{ form_row(form.active) }}
+        {{ form_row(form.name) }}
         <p><button type="submit">Enregistrer</button></p>
     {{ form_end(form) }}
 {% endblock %}

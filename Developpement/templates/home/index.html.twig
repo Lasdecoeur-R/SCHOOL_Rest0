@@ -7,7 +7,7 @@
     <p>Réservation en ligne pour un restaurant (projet école). Interface volontairement brute pour les tests.</p>
     <ul>
         <li><a href="{{ path('app_reserver') }}">Réserver une table</a></li>
-        <li><a href="{{ path('app_login') }}">Connexion restaurateur</a> — <a href="{{ path('app_register') }}">inscription</a></li>
-        <li><a href="{{ path('app_admin_dashboard') }}">Admin</a> (nécessite d’être connecté)</li>
+        <li><a href="{{ path('app_login') }}">Connexion</a> (restaurateurs et admin plateforme) — <a href="{{ path('app_register') }}">inscription restaurateur</a></li>
+        <li>Espace après connexion : <code>/restaurateur</code> (tables) ou <code>/admin</code> (fiches restaurants) selon votre rôle</li>
     </ul>
 {% endblock %}

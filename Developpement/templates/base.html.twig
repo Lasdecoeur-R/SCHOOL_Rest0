@@ -17,13 +17,19 @@
         <a href="{{ path('app_reserver') }}">Réserver</a>
         <span> | </span>
         {% if app.user %}
-            <a href="{{ path('app_admin_dashboard') }}">Admin</a>
-            <span> | </span>
-            <a href="{{ path('app_admin_tables_index') }}">Tables</a>
-            <span> | </span>
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_admin_dashboard') }}">Admin plateforme</a>
+                <span> | </span>
+            {% endif %}
+            {% if is_granted('ROLE_RESTAURATEUR') %}
+                <a href="{{ path('app_restaurateur_dashboard') }}">Espace restaurateur</a>
+                <span> | </span>
+                <a href="{{ path('app_restaurateur_tables_index') }}">Tables</a>
+                <span> | </span>
+            {% endif %}
             <a href="{{ path('app_logout') }}">Déconnexion</a>
         {% else %}
-            <a href="{{ path('app_login') }}">Connexion admin</a>
+            <a href="{{ path('app_login') }}">Connexion</a>
             <span> | </span>
             <a href="{{ path('app_register') }}">Inscription</a>
         {% endif %}

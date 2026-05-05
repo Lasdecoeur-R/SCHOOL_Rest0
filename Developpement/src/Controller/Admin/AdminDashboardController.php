@@ -10,13 +10,12 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Zone back-office sous /admin (firewall + rôle restaurateur).
+ * Accueil administrateur plateforme (pas l’espace restaurateur privé).
  */
 #[Route('/admin')]
-#[IsGranted('ROLE_RESTAURATEUR')]
+#[IsGranted('ROLE_ADMIN')]
 final class AdminDashboardController extends AbstractController
 {
-    /** Tableau de bord restaurateur : liens vers les modules (tables, planning à venir). */
     #[Route('', name: 'app_admin_dashboard')]
     public function index(): Response
     {

@@ -34,7 +34,7 @@ final class RegistrationController extends AbstractController
         ValidatorInterface $validator,
     ): Response {
         if ($this->getUser()) {
-            return $this->redirectToRoute('app_admin_dashboard');
+            return $this->redirectToRoute('app_restaurateur_dashboard');
         }
 
         $form = $this->createForm(RegistrationFormType::class);

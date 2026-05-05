@@ -1,9 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Connexion admin — {{ parent() }}{% endblock %}
+{% block title %}Connexion — {{ parent() }}{% endblock %}
 
 {% block body %}
-    <h1>Connexion restaurateur</h1>
+    <h1>Connexion</h1>
+    <p>Compte restaurateur ou administrateur plateforme.</p>
 
     {% if error %}
         <p role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>

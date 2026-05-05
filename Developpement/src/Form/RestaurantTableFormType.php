@@ -13,11 +13,11 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Formulaire admin : numéro, capacité, table active ou retirée du service.
+ * Formulaire espace restaurateur : numéro, capacité, table active ou retirée du service.
  */
 final class RestaurantTableFormType extends AbstractType
 {
-    /** Champs alignés sur l’entité {@see RestaurantTable} (édition admin). */
+    /** Champs alignés sur l’entité {@see RestaurantTable}. */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder

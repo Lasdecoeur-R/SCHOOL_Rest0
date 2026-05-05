@@ -13,7 +13,7 @@ use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Données de démo : deux établissements (liste déroulante publique), compte admin relié au principal.
+ * Données de démo : deux établissements ; compte restaurateur sur le principal ; administrateur plateforme sans restaurant.
  */
 class AppFixtures extends Fixture
 {
@@ -39,6 +39,14 @@ class AppFixtures extends Fixture
         $admin->setPassword($this->passwordHasher->hashPassword($admin, 'admin123'));
         $admin->setRestaurant($primary);
         $manager->persist($admin);
+
+        $plateformeAdmin = new User();
+        $plateformeAdmin->setEmail('platform@resto.test');
+        $plateformeAdmin->setRoles(['ROLE_ADMIN']);
+        $plateformeAdmin->setRestaurantName(null);
+        $plateformeAdmin->setPassword($this->passwordHasher->hashPassword($plateformeAdmin, 'platform123'));
+        $plateformeAdmin->setRestaurant(null);
+        $manager->persist($plateformeAdmin);
 
         $tables = [
             ['number' => '1', 'capacity' => 2],

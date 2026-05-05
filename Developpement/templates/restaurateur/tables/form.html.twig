@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ title }} — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>{{ title }}</h1>
+    <p><a href="{{ path('app_restaurateur_tables_index') }}">← Liste des tables</a></p>
+
+    {{ form_start(form) }}
+        {{ form_row(form.number) }}
+        {{ form_row(form.capacity) }}
+        {{ form_row(form.active) }}
+        <p><button type="submit">Enregistrer</button></p>
+    {{ form_end(form) }}
+{% endblock %}

@@ -7,8 +7,8 @@
     {% if establishmentLabel is defined %}
         <p><strong>{{ establishmentLabel }}</strong></p>
     {% endif %}
-    <p><a href="{{ path('app_admin_dashboard') }}">← Tableau de bord admin</a></p>
-    <p><a href="{{ path('app_admin_tables_new') }}">Ajouter une table</a></p>
+    <p><a href="{{ path('app_restaurateur_dashboard') }}">← Espace restaurateur</a></p>
+    <p><a href="{{ path('app_restaurateur_tables_new') }}">Ajouter une table</a></p>
 
     {% if tables is empty %}
         <p>Aucune table enregistrée.</p>
@@ -29,9 +29,9 @@
                     <td>{{ t.capacity }}</td>
                     <td>{{ t.active ? 'oui' : 'non' }}</td>
                     <td>
-                        <a href="{{ path('app_admin_tables_edit', { id: t.id }) }}">Modifier</a>
+                        <a href="{{ path('app_restaurateur_tables_edit', { id: t.id }) }}">Modifier</a>
                         {% if deletable[t.id] ?? false %}
-                            <form action="{{ path('app_admin_tables_delete', { id: t.id }) }}" method="post" style="display:inline;">
+                            <form action="{{ path('app_restaurateur_tables_delete', { id: t.id }) }}" method="post" style="display:inline;">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_table_' ~ t.id) }}">
                                 <button type="submit">Supprimer</button>
                             </form>

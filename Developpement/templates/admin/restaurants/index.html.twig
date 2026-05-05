@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Restaurants — admin — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Gestion des établissements</h1>
+    <p><a href="{{ path('app_admin_dashboard') }}">← Tableau de bord plateforme</a></p>
+    <p><a href="{{ path('app_admin_restaurants_new') }}">Créer un établissement</a></p>
+
+    {% if rows is empty %}
+        <p>Aucun restaurant en base.</p>
+    {% else %}
+        <table border="1" cellpadding="6">
+            <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Réservations (via tables)</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                {% set r = row.restaurant %}
+                <tr>
+                    <td>{{ r.name }}</td>
+                    <td>{{ row.reservationCount }}</td>
+                    <td>
+                        <a href="{{ path('app_admin_restaurants_edit', { id: r.id }) }}">Modifier</a>
+                        {% if row.canDelete %}
+                            <form action="{{ path('app_admin_restaurants_delete', { id: r.id }) }}" method="post" style="display:inline;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_restaurant_' ~ r.id) }}">
+                                <button type="submit">Supprimer</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

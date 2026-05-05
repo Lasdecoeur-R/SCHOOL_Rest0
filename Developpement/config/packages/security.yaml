@@ -8,6 +8,10 @@ security:
                 class: App\Entity\User
                 property: email
 
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
+        ROLE_RESTAURATEUR: ROLE_USER
+
     firewalls:
         dev:
             pattern: ^/(_profiler|_wdt|assets|build)/
@@ -19,6 +23,7 @@ security:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
+                success_handler: App\Security\LoginSuccessHandler
             logout:
                 path: app_logout
                 target: app_home
@@ -27,7 +32,8 @@ security:
         - { path: ^/login$, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/logout$, roles: PUBLIC_ACCESS }
-        - { path: ^/admin, roles: ROLE_RESTAURATEUR }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/restaurateur, roles: ROLE_RESTAURATEUR }
 
 when@test:
     security:

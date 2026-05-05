@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Admin;
+namespace App\Controller\Restaurateur;
 
 use App\Entity\Reservation;
 use App\Entity\Restaurant;
@@ -18,21 +18,20 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * CRUD des tables de salle pour l’établissement du restaurateur connecté.
+ * CRUD des tables de salle pour l’établissement du restaurateur connecté (US-R03).
  */
-#[Route('/admin/tables')]
+#[Route('/restaurateur/tables')]
 #[IsGranted('ROLE_RESTAURATEUR')]
-final class AdminRestaurantTableController extends AbstractController
+final class RestaurateurRestaurantTableController extends AbstractController
 {
-    /** Liste des tables + indicateur « supprimable » (aucune réservation liée). */
-    #[Route('', name: 'app_admin_tables_index', methods: ['GET'])]
+    #[Route('', name: 'app_restaurateur_tables_index', methods: ['GET'])]
     public function index(RestaurantTableRepository $restaurantTableRepository, EntityManagerInterface $entityManager): Response
     {
         $restaurant = $this->currentUserRestaurant();
         if (null === $restaurant) {
             $this->addFlash('error', 'Aucun établissement n’est relié à ce compte. Exécutez les migrations puis rechargez vos fixtures, ou créez votre établissement via l’inscription.');
 
-            return $this->redirectToRoute('app_admin_dashboard');
+            return $this->redirectToRoute('app_restaurateur_dashboard');
         }
 
         $tables = $restaurantTableRepository->findByRestaurantOrderedByNumber($restaurant);
@@ -52,22 +51,21 @@ final class AdminRestaurantTableController extends AbstractController
             $deletable[$t->getId()] = !isset($busyIds[$t->getId()]);
         }
 
-        return $this->render('admin/tables/index.html.twig', [
+        return $this->render('restaurateur/tables/index.html.twig', [
             'tables' => $tables,
             'deletable' => $deletable,
             'establishmentLabel' => $restaurant->getName(),
         ]);
     }
 
-    /** Formulaire de création d’une {@see RestaurantTable}. */
-    #[Route('/nouvelle', name: 'app_admin_tables_new', methods: ['GET', 'POST'])]
+    #[Route('/nouvelle', name: 'app_restaurateur_tables_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $restaurant = $this->currentUserRestaurant();
         if (null === $restaurant) {
             $this->addFlash('error', 'Aucun établissement n’est relié à ce compte.');
 
-            return $this->redirectToRoute('app_admin_dashboard');
+            return $this->redirectToRoute('app_restaurateur_dashboard');
         }
 
         $table = new RestaurantTable();
@@ -80,17 +78,16 @@ final class AdminRestaurantTableController extends AbstractController
             $entityManager->flush();
             $this->addFlash('success', 'Table enregistrée.');
 
-            return $this->redirectToRoute('app_admin_tables_index');
+            return $this->redirectToRoute('app_restaurateur_tables_index');
         }
 
-        return $this->render('admin/tables/form.html.twig', [
+        return $this->render('restaurateur/tables/form.html.twig', [
             'form' => $form,
             'title' => 'Nouvelle table',
         ]);
     }
 
-    /** Édition d’une table existante (paramconverter sur l’id). */
-    #[Route('/{id}/modifier', name: 'app_admin_tables_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}/modifier', name: 'app_restaurateur_tables_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function edit(Request $request, RestaurantTable $table, EntityManagerInterface $entityManager): Response
     {
         $this->assertTableOwnedByCurrentUserOrDeny($table);
@@ -102,18 +99,17 @@ final class AdminRestaurantTableController extends AbstractController
             $entityManager->flush();
             $this->addFlash('success', 'Table mise à jour.');
 
-            return $this->redirectToRoute('app_admin_tables_index');
+            return $this->redirectToRoute('app_restaurateur_tables_index');
         }
 
-        return $this->render('admin/tables/form.html.twig', [
+        return $this->render('restaurateur/tables/form.html.twig', [
             'form' => $form,
             'title' => 'Modifier la table '.$table->getNumber(),
             'table' => $table,
         ]);
     }
 
-    /** Suppression sécurisée (POST + CSRF) ; refusée si des réservations existent encore. */
-    #[Route('/{id}/supprimer', name: 'app_admin_tables_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/supprimer', name: 'app_restaurateur_tables_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(Request $request, RestaurantTable $table, EntityManagerInterface $entityManager): Response
     {
         $this->assertTableOwnedByCurrentUserOrDeny($table);
@@ -126,17 +122,16 @@ final class AdminRestaurantTableController extends AbstractController
         if ($count > 0) {
             $this->addFlash('error', 'Impossible de supprimer : des réservations existent pour cette table. Décochez « En service » pour la retirer du planning.');
 
-            return $this->redirectToRoute('app_admin_tables_index');
+            return $this->redirectToRoute('app_restaurateur_tables_index');
         }
 
         $entityManager->remove($table);
         $entityManager->flush();
         $this->addFlash('success', 'Table supprimée.');
 
-        return $this->redirectToRoute('app_admin_tables_index');
+        return $this->redirectToRoute('app_restaurateur_tables_index');
     }
 
-    /** Compte relié ou null (données héritées non migrées). */
     private function currentUserRestaurant(): ?Restaurant
     {
         $user = $this->getUser();
