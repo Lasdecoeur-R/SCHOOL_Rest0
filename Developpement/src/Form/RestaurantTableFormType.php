@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\RestaurantTable;
+use App\Enum\TableSeatingZone;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -27,6 +29,11 @@ final class RestaurantTableFormType extends AbstractType
             ])
             ->add('capacity', IntegerType::class, [
                 'label' => 'Capacité (nombre de couverts)',
+            ])
+            ->add('seatingZone', EnumType::class, [
+                'class' => TableSeatingZone::class,
+                'label' => 'Emplacement',
+                'choice_label' => static fn (TableSeatingZone $z): string => $z->label(),
             ])
             ->add('active', CheckboxType::class, [
                 'label' => 'En service (décocher pour retirer du service sans supprimer l’historique)',

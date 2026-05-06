@@ -82,17 +82,20 @@ final class ReservationBookingService
         $em = $this->entityManager;
 
         // Verrou pessimiste sur toutes les tables « éligibles » (ordre d’id fixe → limite les deadlocks).
-        /** @var list<RestaurantTable> $candidates */
-        $candidates = $em->createQueryBuilder()
+        $qb = $em->createQueryBuilder()
             ->select('t')
             ->from(RestaurantTable::class, 't')
             ->where('t.restaurant = :restaurant')
             ->andWhere('t.active = :active')
             ->andWhere('t.capacity >= :party')
+            ->andWhere('t.seatingZone = :zone')
             ->setParameter('restaurant', $request->restaurant)
             ->setParameter('active', true)
             ->setParameter('party', $request->partySize, Types::INTEGER)
-            ->orderBy('t.id', 'ASC')
+            ->setParameter('zone', $request->seatingZone);
+
+        /** @var list<RestaurantTable> $candidates */
+        $candidates = $qb->orderBy('t.id', 'ASC')
             ->getQuery()
             ->setLockMode(LockMode::PESSIMISTIC_WRITE)
             ->getResult();
@@ -127,7 +130,7 @@ final class ReservationBookingService
             throw new NoTableAvailableException(NoTableAvailableException::DEFAULT_MESSAGE);
         }
 
-        // SPECS_FONCTIONNELLES §6.5 : plus petite capacité suffisante, puis numéro de table croissant.
+        // SPECS_FONCTIONNELLES §6.5 : plus petite capacité suffisante, puis numéro de table croissant (ex. 2 pers. → table 2 plutôt que 4).
         usort(
             $free,
             static function (RestaurantTable $a, RestaurantTable $b): int {

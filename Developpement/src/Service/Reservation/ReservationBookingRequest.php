@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Reservation;
 
 use App\Entity\Restaurant;
+use App\Enum\TableSeatingZone;
 
 /**
  * Données « brutes » passées au service de réservation (pas encore une entité {@see \App\Entity\Reservation}).
@@ -28,6 +29,8 @@ final readonly class ReservationBookingRequest
         public string $guestEmail,
         /** Téléphone obligatoire selon le domaine. */
         public string $guestPhone,
+        /** Filtre d’emplacement (intérieur / terrasse). */
+        public TableSeatingZone $seatingZone = TableSeatingZone::Interior,
     ) {
     }
 }

@@ -2,50 +2,211 @@
 
 {% block title %}Réserver — {{ parent() }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .booking-agenda { margin: 1rem 0; }
+        .booking-agenda__nav { margin-bottom: 0.5rem; }
+        .booking-agenda__scroll { overflow-x: auto; }
+        .booking-agenda__week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            margin-bottom: 1px;
+            background: #bbb;
+            border: 1px solid #bbb;
+        }
+        .booking-agenda__day {
+            background: #fff;
+            padding: 0.35rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .booking-agenda__day--busy { color: #666; }
+        .booking-agenda__day--selected { box-shadow: inset 0 0 0 2px #000; }
+        .booking-agenda__slot-extra { font-size: 0.75rem; line-height: 1.25; margin-top: 0.15rem; color: #444; }
+        @media (max-width: 36rem) {
+            .booking-agenda__week { min-width: 34rem; }
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
     <h1>Réservation</h1>
-    <p>Choisissez la date puis un créneau <strong>midi</strong> (11h00–13h00 inclus) ou <strong>soir</strong> (18h30–22h30 inclus). Créneaux espacés de <strong>15 minutes</strong>.</p>
+    <p>Créneaux <strong>midi</strong> (11h00–13h00) et <strong>soir</strong> (18h30–22h30), pas de 15 minutes. Choisissez d’abord l’effectif : les dates proposées tiennent compte des tables disponibles.</p>
 
-    {# Paramètres d’URL GET : mise à jour des créneaux sans envoyer encore la réservation. #}
-    <form method="get" action="{{ path('app_reserver') }}" aria-label="Restaurant et date pour préparer les créneaux">
+    {# Étape 1 : restaurant + nombre de couverts #}
+    <form method="get" action="{{ path('app_reserver') }}" aria-label="Restaurant et nombre de personnes">
         <p>
-            <label for="booking-rest-quick">Restaurant</label><br>
-            <select id="booking-rest-quick" name="restaurant"{% if bookableRestaurants is not empty %} required{% endif %}>
+            <label for="book-restaurant">Restaurant</label><br>
+            <select id="book-restaurant" name="restaurant"{% if bookableRestaurants is not empty %} required{% endif %}>
                 {% for r in bookableRestaurants %}
-                    <option value="{{ r.id }}" {% if filterRestaurantDefault is defined and filterRestaurantDefault == r.id %}selected{% endif %}>{{ r.name }}</option>
+                    <option value="{{ r.id }}" {% if selectedRestaurant is not null and selectedRestaurant.id == r.id %}selected{% endif %}>{{ r.name }}</option>
                 {% else %}
-                    <option value="">— Aucun établissement inscrit pour l’instant —</option>
+                    <option value="">— Aucun établissement inscrit —</option>
                 {% endfor %}
             </select>
         </p>
         <p>
-            <label for="booking-date-quick">Date du repas</label><br>
-            <input id="booking-date-quick" type="date" name="date" value="{{ filterDateDefault }}" min="{{ minDateFilter }}" required>
-            <button type="submit">Afficher les créneaux disponibles</button>
+            <label for="book-party">Nombre de couverts</label><br>
+            <input id="book-party" type="number" name="party" min="1" max="99" value="{{ partySize >= 1 ? partySize : 2 }}" required>
         </p>
+        <p><button type="submit">Voir les dates disponibles</button></p>
     </form>
 
-    {% if noticeIncompleteTableSetup is defined and noticeIncompleteTableSetup %}
-        <p><strong>Réservations indisponibles pour cet établissement pour l’instant</strong> — le restaurateur ne propose pas encore de tables pour les réservations en ligne.</p>
+    {% if noticeIncompleteTableSetup %}
+        <p><strong>Réservations indisponibles pour cet établissement pour l’instant</strong> — aucune table active n’est configurée.</p>
     {% endif %}
 
     {% if not hasBookableRestaurants %}
-        <p>Aucun restaurant inscrit pour le moment. Merci de revenir plus tard.</p>
-    {% elseif hasSlots %}
-        {{ form_start(form) }}
-            {{ form_row(form.reservationDate) }}
-            {{ form_row(form.slotTime) }}
-            {{ form_row(form.partySize) }}
-            {{ form_row(form.guestName) }}
-            {{ form_row(form.guestEmail) }}
-            {{ form_row(form.guestPhone) }}
-            {{ form_widget(form.submit) }}
-            {{ form_rest(form) }}
-        {{ form_end(form) }}
-    {% elseif hasBookableRestaurants %}
-        <p><strong>Aucun créneau disponible pour cette date</strong> (horaires déjà passés ou fin de journée).</p>
-        <p>Ajustez la date ou changez de restaurant puis cliquez sur « Afficher les créneaux disponibles ».</p>
+        <p>Aucun restaurant inscrit pour le moment.</p>
+    {% elseif hasRestaurantAndParty and tablesReady %}
+
+        {# Étape 2 : agenda (fenêtre de {{ daysPerPage }} jours) #}
+        <h2>Agenda — dates disponibles</h2>
+        {% set dow_fr = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'] %}
+        {% if calendarWindow is not empty %}
+            <section class="booking-agenda" aria-label="Calendrier des disponibilités">
+                <div class="booking-agenda__nav">
+                    <p class="booking-agenda__range">
+                        Du {{ calendarWindow[0].date|date('d/m/Y') }}
+                        au {{ calendarWindow[calendarWindow|length - 1].date|date('d/m/Y') }}
+                    </p>
+                    <span>
+                        <a href="{{ path('app_reserver', { restaurant: selectedRestaurant.id, party: partySize, p: datePage + 1 }) }}">Autres dates</a>
+                        {% if datePage > 0 %}
+                            <span aria-hidden="true"> · </span>
+                            <a href="{{ path('app_reserver', { restaurant: selectedRestaurant.id, party: partySize, p: datePage - 1 }) }}">Dates précédentes</a>
+                        {% endif %}
+                    </span>
+                </div>
+                {% if not calendarHasAvailability %}
+                    <p>Aucun créneau libre sur cette période — essayez un autre nombre de couverts ou parcourez d’autres dates.</p>
+                {% endif %}
+                <div class="booking-agenda__scroll">
+                    {% for week in calendarWeeks %}
+                        <div class="booking-agenda__week" role="row">
+                            {% for cell in week %}
+                                {% set ymd = cell.date|date('Y-m-d') %}
+                                {% set is_selected = selectedDate is not null and selectedDate|date('Y-m-d') == ymd %}
+                                <div class="booking-agenda__day{% if cell.available %} booking-agenda__day--free{% else %} booking-agenda__day--busy{% endif %}{% if is_selected %} booking-agenda__day--selected{% endif %}" role="gridcell" aria-selected="{{ is_selected ? 'true' : 'false' }}">
+                                    <span class="booking-agenda__dow">{{ dow_fr[cell.date|date('N') - 1] }}</span>
+                                    <span class="booking-agenda__day-num">{{ cell.date|date('j') }}</span>
+                                    {% if cell.available %}
+                                        <a class="booking-agenda__day-link" href="{{ path('app_reserver', {
+                                            restaurant: selectedRestaurant.id,
+                                            party: partySize,
+                                            date: ymd,
+                                            p: datePage
+                                        }) }}">Choisir</a>
+                                    {% else %}
+                                        <span class="booking-agenda__day-muted">Complet</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        {# Étape 3 : zone #}
+        {% if selectedDate is not null %}
+            {% set zone_base = { restaurant: selectedRestaurant.id, party: partySize, date: selectedDate|date('Y-m-d'), p: datePage } %}
+            {% set zone_base = mealForLinks is not null ? zone_base|merge({ meal: mealForLinks }) : zone_base %}
+            <h2>Emplacement</h2>
+            <p>Date choisie : <strong>{{ selectedDate|date('d/m/Y') }}</strong></p>
+            <p>
+                <a href="{{ path('app_reserver', zone_base|merge({ zone: 'interior' })) }}">Intérieur</a>
+                —
+                <a href="{{ path('app_reserver', zone_base|merge({ zone: 'exterior' })) }}">Extérieur</a>
+            </p>
+        {% endif %}
+
+        {# Étape 4 : midi / soir puis créneaux (grille comme l’agenda) #}
+        {% if selectedDate is not null and selectedZone is not null %}
+            {% set slot_zone_query = {
+                restaurant: selectedRestaurant.id,
+                party: partySize,
+                date: selectedDate|date('Y-m-d'),
+                zone: selectedZone.value,
+                p: datePage,
+            } %}
+            <h2>Créneau et tables libres</h2>
+            <p>{{ selectedZone.value == 'interior' ? 'Intérieur' : 'Extérieur' }} — {{ selectedDate|date('d/m/Y') }}. Choisissez le <strong>service</strong>, puis un horaire (grille comme pour les dates) : tables filtrées pour vos {{ partySize }} couvert(s).</p>
+
+            <h3>Service</h3>
+            <p>
+                <a href="{{ path('app_reserver', slot_zone_query|merge({ meal: 'midi' })) }}">{% if bookingMeal == 'midi' %}<strong>Midi</strong>{% else %}Midi{% endif %}</a>
+                —
+                <a href="{{ path('app_reserver', slot_zone_query|merge({ meal: 'soir' })) }}">{% if bookingMeal == 'soir' %}<strong>Soir</strong>{% else %}Soir{% endif %}</a>
+            </p>
+
+            {% if bookingMeal is null %}
+                <p>Indiquez d’abord midi ou soir pour afficher les créneaux correspondants.</p>
+            {% elseif slotAvailabilityRows is empty %}
+                <p>Aucun horaire disponible pour ce service ce jour-là.</p>
+            {% else %}
+                <section class="booking-agenda" aria-label="Créneaux disponibles pour le service choisi">
+                    <div class="booking-agenda__scroll">
+                        {% for slotWeek in slotAvailabilityRows|batch(7) %}
+                            <div class="booking-agenda__week" role="row">
+                                {% for row in slotWeek %}
+                                    {% set svc = row.hi < '14:00' ? 'Midi' : 'Soir' %}
+                                    {% set is_slot_selected = highlightedSlotHi is not null and highlightedSlotHi == row.hi %}
+                                    <div class="booking-agenda__day{% if row.freeTables is not empty %} booking-agenda__day--free{% else %} booking-agenda__day--busy{% endif %}{% if is_slot_selected %} booking-agenda__day--selected{% endif %}" role="gridcell">
+                                        <span class="booking-agenda__dow">{{ svc }}</span>
+                                        <span class="booking-agenda__day-num">{{ row.hi }}</span>
+                                        {% if row.freeTables is empty %}
+                                            <span class="booking-agenda__day-muted">Complet</span>
+                                        {% else %}
+                                            <div class="booking-agenda__slot-extra">{{ row.freeTables|length }} placement(s) possible(s)</div>
+                                            {% if is_slot_selected %}
+                                                <span class="booking-agenda__day-muted">Ci-dessous</span>
+                                            {% else %}
+                                                {% set slot_pick = slot_zone_query|merge({ meal: bookingMeal, slot: row.hi }) %}
+                                                <a class="booking-agenda__day-link" href="{{ path('app_reserver', slot_pick) }}">Choisir</a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        {% endif %}
+
+        {# Étape 5 : coordonnées — la table est attribuée automatiquement (plus petite capacité suffisante). #}
+        {% if showFinalStep %}
+            <h2>Confirmer la réservation</h2>
+            <p>Aucun choix de table : l’établissement vous place en salle (en priorité sur la <strong>plus petite table</strong> adaptée à votre nombre de couverts). Les champs <strong>nom, email et téléphone</strong> sont conservés sur cet appareil si vous changez d’horaire.</p>
+            {% if freeTablesPreview is empty %}
+                <p>Aucune table libre pour ce créneau et cette zone. Choisissez un autre horaire ou l’autre emplacement.</p>
+            {% else %}
+                {% if finishForm is not null %}
+                    {{ form_start(finishForm) }}
+                        <input type="hidden" name="flow_restaurant" value="{{ selectedRestaurant.id }}">
+                        <input type="hidden" name="flow_party" value="{{ partySize }}">
+                        <input type="hidden" name="flow_date" value="{{ selectedDate|date('Y-m-d') }}">
+                        <input type="hidden" name="flow_zone" value="{{ selectedZone.value }}">
+                        <input type="hidden" name="flow_slot" value="{{ selectedSlotHi }}">
+                        {% if bookingMeal is not null %}
+                            <input type="hidden" name="flow_meal" value="{{ bookingMeal }}">
+                        {% endif %}
+                        {{ form_errors(finishForm) }}
+                        {{ form_row(finishForm.guestName) }}
+                        {{ form_row(finishForm.guestEmail) }}
+                        {{ form_row(finishForm.guestPhone) }}
+                        {{ form_widget(finishForm.submit) }}
+                    {{ form_end(finishForm) }}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+
+    {% elseif hasBookableRestaurants and selectedRestaurant is not null and partySize < 1 %}
+        <p>Indiquez au moins une personne et validez « Voir les dates disponibles ».</p>
     {% endif %}
 
-    <p><a href="{{ path('app_home') }}">← Retour accueil</a></p>
+    <p><a href="{{ path('app_home') }}">← Accueil</a></p>
 {% endblock %}

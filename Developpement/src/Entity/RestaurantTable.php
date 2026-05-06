@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\TableSeatingZone;
 use App\Repository\RestaurantTableRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -50,6 +51,10 @@ class RestaurantTable
     /** Si false : la table n’est plus proposée par le service de réservation (sans effacer l’historique). */
     #[ORM\Column(options: ['default' => true])]
     private bool $active = true;
+
+    /** Intérieur / extérieur (terrasse) — utilisé par le parcours public et le choix de table. */
+    #[ORM\Column(length: 20, enumType: TableSeatingZone::class)]
+    private TableSeatingZone $seatingZone = TableSeatingZone::Interior;
 
     /**
      * Réservations liées à cette table (inverse de {@see Reservation::$restaurantTable}).
@@ -115,6 +120,18 @@ class RestaurantTable
     public function setActive(bool $active): static
     {
         $this->active = $active;
+
+        return $this;
+    }
+
+    public function getSeatingZone(): TableSeatingZone
+    {
+        return $this->seatingZone;
+    }
+
+    public function setSeatingZone(TableSeatingZone $seatingZone): static
+    {
+        $this->seatingZone = $seatingZone;
 
         return $this;
     }

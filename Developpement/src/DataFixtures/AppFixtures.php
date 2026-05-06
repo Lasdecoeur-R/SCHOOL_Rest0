@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
-use App\Entity\Reservation;
 use App\Entity\Restaurant;
 use App\Entity\RestaurantTable;
 use App\Entity\User;
@@ -81,22 +80,6 @@ class AppFixtures extends Fixture
         $z2->setCapacity(6);
         $z2->setActive(true);
         $manager->persist($z2);
-
-        $tableForParty = $entities[2];
-
-        $tomorrow = (new \DateTimeImmutable('tomorrow'))->setTime(0, 0);
-        $slotAt = $tomorrow->setTime(12, 0);
-
-        $sample = new Reservation();
-        $sample->setRestaurantTable($tableForParty);
-        $sample->setReservationDate($tomorrow);
-        $sample->setSlotAt($slotAt);
-        $sample->setPartySize(3);
-        $sample->setGuestName('Client Démo');
-        $sample->setGuestEmail('client@example.test');
-        $sample->setGuestPhone('0612345678');
-        $sample->setStatus(Reservation::STATUS_CONFIRMED);
-        $manager->persist($sample);
 
         $manager->flush();
     }

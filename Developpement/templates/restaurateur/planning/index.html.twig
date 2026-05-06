@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Planning des réservations — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Planning des réservations</h1>
+    <p><a href="{{ path('app_restaurateur_dashboard') }}">← Espace restaurateur</a></p>
+    <p><strong>{{ restaurant.name }}</strong></p>
+
+    <form method="get" action="{{ path('app_restaurateur_planning') }}">
+        <label for="planning-date">Date</label>
+        <input id="planning-date" type="date" name="date" value="{{ selectedDate|date('Y-m-d') }}" min="{{ minDate }}">
+        <button type="submit">Filtrer</button>
+    </form>
+
+    {% if reservations is empty %}
+        <p>Aucune réservation active sur cette date.</p>
+    {% else %}
+        <table border="1" cellpadding="6">
+            <thead>
+            <tr>
+                <th>Créneau</th>
+                <th>Table</th>
+                <th>Couverts</th>
+                <th>Client</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for r in reservations %}
+                <tr>
+                    <td>{{ r.slotAt|date('H:i') }}</td>
+                    <td>{{ r.restaurantTable.number }}</td>
+                    <td>{{ r.partySize }}</td>
+                    <td>{{ r.guestName }}</td>
+                    <td><a href="{{ path('app_restaurateur_planning_detail', { id: r.id }) }}">Détail</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

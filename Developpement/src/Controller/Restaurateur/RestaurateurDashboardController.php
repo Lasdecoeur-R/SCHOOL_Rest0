@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Accueil de l’espace restaurateur : tables, établissement, planning (à venir).
+ * Accueil de l’espace restaurateur : tables, établissement et planning.
  */
 #[Route('/restaurateur')]
 #[IsGranted('ROLE_RESTAURATEUR')]

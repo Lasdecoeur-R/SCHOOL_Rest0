@@ -38,6 +38,32 @@ final class ReservationBookingServiceTest extends KernelTestCase
         $tool->createSchema($meta);
     }
 
+    /** 2 couverts : on privilégie une table à 2 places plutôt qu’une table à 4. */
+    public function testPartyTwoPrefersTwoTopOverFourTop(): void
+    {
+        $r = $this->persistRestaurant('Resto 2 vs 4');
+        $this->persistTable($r, 'G', 4);
+        $this->persistTable($r, 'P', 2);
+        $this->entityManager->flush();
+
+        $date = new \DateTimeImmutable('2026-06-09');
+        $slot = $date->setTime(12, 0);
+        $service = self::getContainer()->get(ReservationBookingService::class);
+
+        $reservation = $service->book(new ReservationBookingRequest(
+            $r,
+            $date,
+            $slot,
+            2,
+            'Deux',
+            'deux@example.test',
+            '0611223344',
+        ));
+
+        self::assertSame('P', $reservation->getRestaurantTable()?->getNumber());
+        self::assertSame(2, $reservation->getRestaurantTable()?->getCapacity());
+    }
+
     /** §6.5 : capacité ≥ 3 → première table à 4 places ; ex æquo → numéro « A » avant « Z ». */
     public function testPicksSmallestCapacityTableWithStableTieBreak(): void
     {

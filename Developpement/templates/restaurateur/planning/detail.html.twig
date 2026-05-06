@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail réservation #{{ reservation.id }} — {{ parent() }}{% endblock %}
+
+{% block body %}
+    <h1>Détail réservation #{{ reservation.id }}</h1>
+    <p><a href="{{ path('app_restaurateur_planning', { date: reservation.reservationDate|date('Y-m-d') }) }}">← Retour au planning du jour</a></p>
+
+    <ul>
+        <li>Établissement : <strong>{{ restaurant.name }}</strong></li>
+        <li>Statut : <strong>{{ reservation.status }}</strong></li>
+        <li>Date : {{ reservation.reservationDate|date('d/m/Y') }}</li>
+        <li>Créneau : {{ reservation.slotAt|date('H:i') }}</li>
+        <li>Table : {{ reservation.restaurantTable.number }}</li>
+        <li>Nombre de personnes : {{ reservation.partySize }}</li>
+        <li>Client : {{ reservation.guestName }}</li>
+        <li>Email : {{ reservation.guestEmail }}</li>
+        <li>Téléphone : {{ reservation.guestPhone }}</li>
+        <li>Créée le : {{ reservation.createdAt|date('d/m/Y H:i') }}</li>
+    </ul>
+{% endblock %}

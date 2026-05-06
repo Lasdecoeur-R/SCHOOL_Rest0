@@ -12,7 +12,7 @@
         <li><strong>Date</strong> : {{ reservation.reservationDate|date('d/m/Y') }}</li>
         <li><strong>Créneau</strong> : {{ reservation.slotAt|date('H:i') }}</li>
         <li><strong>Personnes</strong> : {{ reservation.partySize }}</li>
-        <li><strong>Table attribuée</strong> : n<sup>o</sup> {{ reservation.restaurantTable.number }} (capacité {{ reservation.restaurantTable.capacity }})</li>
+        <li><strong>Table proposée par le système</strong> : n<sup>o</sup> {{ reservation.restaurantTable.number }} ({{ reservation.restaurantTable.capacity }} places, {{ reservation.restaurantTable.seatingZone.value == 'interior' ? 'intérieur' : 'extérieur' }}) — le restaurant peut l’ajuster sur place.</li>
         <li><strong>Téléphone</strong> : {{ reservation.guestPhone }}</li>
         <li><strong>Email</strong> : {{ reservation.guestEmail }}</li>
     </ul>
